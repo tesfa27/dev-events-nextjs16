@@ -5,6 +5,8 @@ import { getSimilarEventsBySlug } from "@/lib/actions/event.actions";
 import { IEvent } from "@/database";
 import EventCard from "@/app/components/EventCard";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
 const EventDetailItem = ({ icon, alt, label }: { icon: string; alt: string; label: string; }) => (
   <div className="flex-row-gap-2 items-center">
     <Image src={icon} alt={alt} width={17} height={17} />
@@ -36,9 +38,32 @@ const EventDetailsPage = async ({ params }: { params: { slug: string } }) => {
 
   const { slug } = await params;
   const request = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/events/${slug}`);
-  const { event: { description, date, location, image, overview, time, mode, agenda, audience, organizer, tags } } = await request.json();
+  let event;
+    try {
+        const request = await fetch(`${BASE_URL}/api/events/${slug}`, {
+            next: { revalidate: 60 }
+        });
 
-  if (!description) return notFound();
+        if (!request.ok) {
+            if (request.status === 404) {
+                return notFound();
+            }
+            throw new Error(`Failed to fetch event: ${request.statusText}`);
+        }
+
+        const response = await request.json();
+        event = response.event;
+
+        if (!event) {
+            return notFound();
+        }
+    } catch (error) {
+        console.error('Error fetching event:', error);
+        return notFound();
+    }
+
+    const { description, image, overview, date, time, location, mode, agenda, audience, tags, organizer } = event;
+
   const bookings = 10;
 
   const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
@@ -94,7 +119,7 @@ const EventDetailsPage = async ({ params }: { params: { slug: string } }) => {
               <p className="text-sm">Be the first to book your spot!</p>
             )}
 
-            <BookEvent />
+             <BookEvent eventId={event._id} slug={event.slug} />
           </div>
         </aside>
 
