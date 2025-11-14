@@ -1,4 +1,4 @@
-import EventDetails from "@/app/components/EventDetails";
+import EventDetails from "@/components/EventDetails";
 import {Suspense} from "react";
 
 
