@@ -4,11 +4,15 @@ import { DataTable } from "./data-table"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-const DashboardPage = async () => {
-  const response = await fetch(`${BASE_URL}/api/events?limit=100`, {
+const DashboardPage = async ({ searchParams }: { searchParams: Promise<{ page?: string }> }) => {
+  const { page: pageParam } = await searchParams;
+  const page = Number(pageParam) || 1;
+  const limit = 10;
+
+  const response = await fetch(`${BASE_URL}/api/events?page=${page}&limit=${limit}`, {
     cache: 'no-store'
   });
-  const { events } = await response.json();
+  const { events, pagination } = await response.json();
 
   return (
     <main>
@@ -18,7 +22,7 @@ const DashboardPage = async () => {
         <button className="btn-primary text-lg">Add New Event</button>
       </Link>
     </div>
-      <DataTable columns={columns} data={events} />
+      <DataTable columns={columns} data={events} pagination={pagination} />
     </main>
   )
 }

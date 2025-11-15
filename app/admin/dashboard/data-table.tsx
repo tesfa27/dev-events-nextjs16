@@ -5,9 +5,9 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { useRouter } from "next/navigation"
 
 import {
   Table,
@@ -21,22 +21,26 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  pagination,
 }: DataTableProps<TData, TValue>) {
+  const router = useRouter()
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
+    manualPagination: true,
+    pageCount: pagination.totalPages,
   })
 
   return (
@@ -88,24 +92,24 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-between py-4">
         <div className="text-sm text-muted-foreground">
-          Showing {table.getRowModel().rows.length} of {data.length} entries
+          Showing {(pagination.page - 1) * pagination.limit + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} entries
         </div>
         <div className="flex items-center space-x-2">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          onClick={() => router.push(`?page=${pagination.page - 1}`)}
+          disabled={pagination.page === 1}
         >
           Previous
         </Button>
         <div className="flex items-center gap-1">
-          {Array.from({ length: table.getPageCount() }, (_, i) => (
+          {Array.from({ length: pagination.totalPages }, (_, i) => (
             <Button
               key={i}
-              variant={i === table.getState().pagination.pageIndex ? "secondary" : "outline"}
+              variant={i + 1 === pagination.page ? "secondary" : "outline"}
               size="sm"
-              onClick={() => table.setPageIndex(i)}
+              onClick={() => router.push(`?page=${i + 1}`)}
             >
               {i + 1}
             </Button>
@@ -114,8 +118,8 @@ export function DataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          onClick={() => router.push(`?page=${pagination.page + 1}`)}
+          disabled={pagination.page === pagination.totalPages}
         >
           Next
         </Button>
