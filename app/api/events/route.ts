@@ -48,14 +48,36 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
     try {
         await connectDB();
-        const events = await Event.find().sort({ createdAt: -1 });
-        return NextResponse.json({ message: 'Events fetched successfully', events }, { status: 200 });
+        
+        const { searchParams } = new URL(req.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '10');
+        const sort = searchParams.get('sort') || 'desc';
+        
+        const skip = (page - 1) * limit;
+        const sortOrder = sort === 'desc' ? -1 : 1;
+        
+        const events = await Event.find()
+            .sort({ createdAt: sortOrder })
+            .skip(skip)
+            .limit(limit);
+        
+        const total = await Event.countDocuments();
+        
+        return NextResponse.json({
+            message: 'Events fetched successfully',
+            events,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        }, { status: 200 });
     } catch (e) {
         console.error(e);
         return NextResponse.json({ message: 'Failed to fetch events', error: e instanceof Error ? e.message : 'Unknown Error' }, { status: 500 });
     }
-
-
 }
 
 

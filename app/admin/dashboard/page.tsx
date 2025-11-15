@@ -1,9 +1,15 @@
 import Link from 'next/link'
 import { columns, EventItem } from "./columns"
 import { DataTable } from "./data-table"
-import events from '@/lib/constants'
 
-const DashboardPage = () => {
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
+const DashboardPage = async () => {
+  const response = await fetch(`${BASE_URL}/api/events?limit=100`, {
+    cache: 'no-store'
+  });
+  const { events } = await response.json();
+
   return (
     <main>
     <div className='flex items-center justify-between mb-8'>

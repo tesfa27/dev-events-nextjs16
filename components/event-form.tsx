@@ -103,7 +103,7 @@ export default function EventForm() {
     try {
       console.log(values);
       toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 ">
           <code className="text-white">{JSON.stringify(values, null, 2)}</code>
         </pre>
       );
@@ -121,12 +121,12 @@ export default function EventForm() {
           control={form.control}
           name="event_title"
           render={({ field }) => (
-            <FormItem className="p-4 rounded-lg bg-dark-200/10">
+            <FormItem className="rounded-lg bg-dark-200/10">
               <FormLabel className="text-lg font-semibold mb-3 text-white">Event Title</FormLabel>
               <FormControl>
                 <Input 
                 placeholder="Enter Event Title"
-                className="border-2 border-gray-800 bg-dark-200 py-5 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 
                 type="text"
                 {...field} />
@@ -141,7 +141,7 @@ export default function EventForm() {
       control={form.control}
       name="event_date"
       render={({ field }) => (
-        <FormItem className="flex flex-col p-4 rounded-lg bg-dark-200/10">
+        <FormItem className="rounded-lg bg-dark-200/10">
           <FormLabel className="text-lg font-semibold mb-3 text-white">Event Date</FormLabel>
           <Popover>
             <PopoverTrigger asChild>
@@ -149,7 +149,7 @@ export default function EventForm() {
                 <Button
                   variant={"outline"}
                   className={cn(
-                    "w-full pl-4 pr-4 text-left font-normal border-2 border-gray-800 bg-dark-200 py-5 text-base text-white hover:bg-dark-200 hover:text-white focus:ring-2 focus:ring-primary transition-all duration-200",
+                    "w-full pl-4 pr-4 text-left font-normal border-2 border-gray-800 bg-dark-200 py-8 text-base text-white hover:bg-dark-200 hover:text-white focus:ring-2 focus:ring-primary transition-all duration-200",
                     !field.value && "text-muted-foreground"
                   )}
                 >
@@ -182,12 +182,12 @@ export default function EventForm() {
           control={form.control}
           name="location"
           render={({ field }) => (
-            <FormItem className="p-4 rounded-lg bg-dark-200/10">
+            <FormItem className=" rounded-lg bg-dark-200/10">
               <FormLabel className="text-lg font-semibold mb-3 text-white">Location</FormLabel>
               <FormControl>
                 <Input 
                 placeholder="Enter Event Venue"
-                className="border-2 border-gray-800 bg-dark-200 py-5 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 type="text"
                 {...field} />
               </FormControl>
@@ -201,11 +201,11 @@ export default function EventForm() {
           control={form.control}
           name="event_type"
           render={({ field }) => (
-            <FormItem className="p-4 rounded-lg bg-dark-200/10">
+            <FormItem className=" rounded-lg bg-dark-200/10">
               <FormLabel className="text-lg font-semibold mb-3 text-white">Event Type</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className="border-2 border-gray-800 bg-dark-200 py-5 px-4 text-base focus:ring-2 focus:ring-primary transition-all duration-200">
+                  <SelectTrigger className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base focus:ring-2 focus:ring-primary transition-all duration-200">
                     <SelectValue placeholder="Select Event Type" />
                   </SelectTrigger>
                 </FormControl>
@@ -225,14 +225,14 @@ export default function EventForm() {
               control={form.control}
               name="event_image"
               render={({ field }) => (
-                <FormItem className="p-4 rounded-lg bg-dark-200/10">
+                <FormItem className=" rounded-lg bg-dark-200/10">
                   <FormLabel className="text-lg font-semibold mb-3 text-white">Event Image</FormLabel>
                   <FormControl>
                     <FileUploader
                       value={files}
                       onValueChange={setFiles}
                       dropzoneOptions={dropZoneConfig}
-                      className="relative border-2 border-gray-800 bg-dark-200 rounded-lg p-4 transition-all duration-200 hover:border-primary"
+                      className="relative border-2 border-gray-800 bg-dark-200 rounded-lg  transition-all duration-200 hover:border-primary"
                     >
                       <FileInput
                         id="fileInput"
@@ -271,14 +271,14 @@ export default function EventForm() {
           control={form.control}
           name="tags"
           render={({ field }) => (
-            <FormItem className="p-4 rounded-lg bg-dark-200/10">
+            <FormItem className=" rounded-lg bg-dark-200/10">
               <FormLabel className="text-lg font-semibold mb-3 text-white">Enter Tags</FormLabel>
               <FormControl>
                 <TagsInput
                   value={field.value}
                   onValueChange={field.onChange}
                   placeholder="Enter your tags"
-                  className="border-2 border-gray-800 bg-dark-200 py-5 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary transition-all duration-200"
+                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary transition-all duration-200"
                 />
               </FormControl>
               
@@ -291,12 +291,12 @@ export default function EventForm() {
           control={form.control}
           name="event_description"
           render={({ field }) => (
-            <FormItem className="p-4 rounded-lg bg-dark-200/10">
+            <FormItem className=" rounded-lg bg-dark-200/10">
               <FormLabel className="text-lg font-semibold mb-3 text-white">Event Description</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Enter event description"
-                  className="resize-none border-2 border-gray-800 bg-dark-200 py-5 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 min-h-[120px]"
+                  className="resize-none border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 min-h-[120px]"
                   {...field}
                 />
               </FormControl>
@@ -305,7 +305,7 @@ export default function EventForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="btn-primary text-base text-black w-full py-4 mt-8 font-semibold transition-all duration-200 hover:scale-[1.02] focus:ring-2 focus:ring-primary focus:ring-offset-2">Create Event</Button>
+        <Button type="submit" className="btn-primary text-lg text-black w-full py-8 mt-8 font-semibold transition-all duration-200 hover:scale-[1.02] focus:ring-2 focus:ring-primary focus:ring-offset-2">Create Event</Button>
       </form>
     </Form>
   )
