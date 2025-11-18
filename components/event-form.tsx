@@ -55,7 +55,8 @@ import {
 } from "@/components/ui/select"
 import {
   CloudUpload,
-  Paperclip
+  Paperclip,
+  X
 } from "lucide-react"
 import {
   FileInput,
@@ -71,45 +72,83 @@ import {
 } from "@/components/ui/textarea"
 
 const formSchema = z.object({
-  event_title: z.string().min(1).optional(),
-  event_date: z.coerce.date().optional(),
-  location: z.string().min(1).optional(),
-  event_type: z.string().optional(),
-  event_image: z.string().optional(),
-  tags: z.array(z.string()).min(1, {
-    error: "Please select at least one item"
-  }).optional(),
-  event_description: z.string().optional()
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  overview: z.string().min(1, "Overview is required"),
+  venue: z.string().min(1, "Venue is required"),
+  location: z.string().min(1, "Location is required"),
+  date: z.coerce.date(),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/, "Time must be in HH:MM format"),
+  mode: z.string().min(1, "Mode is required"),
+  audience: z.string().min(1, "Audience is required"),
+  organizer: z.string().min(1, "Organizer is required"),
+  tags: z.array(z.string()).min(1, "At least one tag is required"),
+  agenda: z.array(z.string()).min(1, "At least one agenda item is required")
 });
 
 export default function EventForm() {
-
-  const [files, setFiles] = useState < File[] | null > (null);
+  const [files, setFiles] = useState<File[] | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dropZoneConfig = {
-    maxFiles: 5,
+    maxFiles: 1,
     maxSize: 1024 * 1024 * 4,
-    multiple: true,
+    multiple: false,
   };
-  const form = useForm < z.infer < typeof formSchema >> ({
+
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      "tags": ["test"],
-      "event_date": new Date()
+      tags: [],
+      agenda: [],
+      date: new Date()
     },
   })
 
-  function onSubmit(values: z.infer < typeof formSchema > ) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      console.log(values);
-      toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 ">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      );
+      setIsSubmitting(true);
+      
+      if (!files || files.length === 0) {
+        toast.error("Please select an image file");
+        return;
+      }
+
+      const formData = new FormData();
+      
+      // Add all form fields
+      Object.entries(values).forEach(([key, value]) => {
+        if (key === 'date') {
+          formData.append(key, (value as Date).toISOString().split('T')[0]);
+        } else if (key === 'tags' || key === 'agenda') {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value as string);
+        }
+      });
+      
+      // Add image file
+      formData.append('image', files[0]);
+
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success("Event created successfully!");
+        form.reset();
+        setFiles(null);
+      } else {
+        toast.error(result.message || "Failed to create event");
+      }
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -119,7 +158,7 @@ export default function EventForm() {
         
         <FormField
           control={form.control}
-          name="event_title"
+          name="title"
           render={({ field }) => (
             <FormItem className="rounded-lg bg-dark-200/10">
               <FormLabel className="text-lg font-semibold mb-3 text-white">Event Title</FormLabel>
@@ -127,71 +166,168 @@ export default function EventForm() {
                 <Input 
                 placeholder="Enter Event Title"
                 className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
-                
                 type="text"
                 {...field} />
               </FormControl>
-              
               <FormMessage />
             </FormItem>
           )}
         />
         
-      <FormField
-      control={form.control}
-      name="event_date"
-      render={({ field }) => (
-        <FormItem className="rounded-lg bg-dark-200/10">
-          <FormLabel className="text-lg font-semibold mb-3 text-white">Event Date</FormLabel>
-          <Popover>
-            <PopoverTrigger asChild>
-              <FormControl>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full pl-4 pr-4 text-left font-normal border-2 border-gray-800 bg-dark-200 py-8 text-base text-white hover:bg-dark-200 hover:text-white focus:ring-2 focus:ring-primary transition-all duration-200",
-                    !field.value && "text-muted-foreground"
-                  )}
-                >
-                  {field.value ? (
-                    format(field.value, "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </FormControl>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-dark-200 border-gray-800" align="start">
-              <Calendar
-                mode="single"
-                selected={field.value}
-                onSelect={field.onChange}
-                initialFocus
-                className="bg-dark-200 text-white"
-              />
-            </PopoverContent>
-          </Popover>
-       
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="rounded-lg bg-dark-200/10">
+                <FormLabel className="text-lg font-semibold mb-3 text-white">Event Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-4 pr-4 text-left font-normal border-2 border-gray-800 bg-dark-200 py-8 text-base text-white hover:bg-dark-200 hover:text-white focus:ring-2 focus:ring-primary transition-all duration-200",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-dark-200 border-gray-800" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                      className="bg-dark-200 text-white"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem className="rounded-lg bg-dark-200/10">
+                <FormLabel className="text-lg font-semibold mb-3 text-white">Event Time</FormLabel>
+                <FormControl>
+                  <Input 
+                  placeholder="HH:MM (e.g., 14:30)"
+                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                  type="text"
+                  {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="venue"
+            render={({ field }) => (
+              <FormItem className="rounded-lg bg-dark-200/10">
+                <FormLabel className="text-lg font-semibold mb-3 text-white">Venue</FormLabel>
+                <FormControl>
+                  <Input 
+                  placeholder="Enter Event Venue"
+                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                  type="text"
+                  {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem className="rounded-lg bg-dark-200/10">
+                <FormLabel className="text-lg font-semibold mb-3 text-white">Location</FormLabel>
+                <FormControl>
+                  <Input 
+                  placeholder="Enter Event Location/Address"
+                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                  type="text"
+                  {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="mode"
+            render={({ field }) => (
+              <FormItem className="rounded-lg bg-dark-200/10">
+                <FormLabel className="text-lg font-semibold mb-3 text-white">Event Mode</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base focus:ring-2 focus:ring-primary transition-all duration-200">
+                      <SelectValue placeholder="Select Event Mode" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-dark-200 border-gray-800">
+                    <SelectItem value="online" className="text-white hover:bg-dark-100">Online</SelectItem>
+                    <SelectItem value="offline" className="text-white hover:bg-dark-100">Offline</SelectItem>
+                    <SelectItem value="hybrid" className="text-white hover:bg-dark-100">Hybrid</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="audience"
+            render={({ field }) => (
+              <FormItem className="rounded-lg bg-dark-200/10">
+                <FormLabel className="text-lg font-semibold mb-3 text-white">Target Audience</FormLabel>
+                <FormControl>
+                  <Input 
+                  placeholder="e.g., Developers, Students, Professionals"
+                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                  type="text"
+                  {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         
         <FormField
           control={form.control}
-          name="location"
+          name="organizer"
           render={({ field }) => (
-            <FormItem className=" rounded-lg bg-dark-200/10">
-              <FormLabel className="text-lg font-semibold mb-3 text-white">Location</FormLabel>
+            <FormItem className="rounded-lg bg-dark-200/10">
+              <FormLabel className="text-lg font-semibold mb-3 text-white">Organizer</FormLabel>
               <FormControl>
                 <Input 
-                placeholder="Enter Event Venue"
+                placeholder="Enter Organizer Name"
                 className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 type="text"
                 {...field} />
               </FormControl>
-              
               <FormMessage />
             </FormItem>
           )}
@@ -199,99 +335,9 @@ export default function EventForm() {
         
         <FormField
           control={form.control}
-          name="event_type"
+          name="description"
           render={({ field }) => (
-            <FormItem className=" rounded-lg bg-dark-200/10">
-              <FormLabel className="text-lg font-semibold mb-3 text-white">Event Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base focus:ring-2 focus:ring-primary transition-all duration-200">
-                    <SelectValue placeholder="Select Event Type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-dark-200 border-gray-800">
-                  <SelectItem value="m@example.com" className="text-white hover:bg-dark-100">m@example.com</SelectItem>
-                  <SelectItem value="m@google.com" className="text-white hover:bg-dark-100">m@google.com</SelectItem>
-                  <SelectItem value="m@support.com" className="text-white hover:bg-dark-100">m@support.com</SelectItem>
-                </SelectContent>
-              </Select>
-                
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-            <FormField
-              control={form.control}
-              name="event_image"
-              render={({ field }) => (
-                <FormItem className=" rounded-lg bg-dark-200/10">
-                  <FormLabel className="text-lg font-semibold mb-3 text-white">Event Image</FormLabel>
-                  <FormControl>
-                    <FileUploader
-                      value={files}
-                      onValueChange={setFiles}
-                      dropzoneOptions={dropZoneConfig}
-                      className="relative border-2 border-gray-800 bg-dark-200 rounded-lg  transition-all duration-200 hover:border-primary"
-                    >
-                      <FileInput
-                        id="fileInput"
-                        className="outline-dashed outline-1 outline-slate-500"
-                      >
-                        <div className="flex items-center justify-center flex-col p-8 w-full ">
-                          <CloudUpload className='text-gray-500 w-10 h-10' />
-                          <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="font-semibold">Click to upload</span>
-                            &nbsp; or drag and drop
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            SVG, PNG, JPG or GIF
-                          </p>
-                        </div>
-                      </FileInput>
-                      <FileUploaderContent>
-                        {files &&
-                          files.length > 0 &&
-                          files.map((file, i) => (
-                            <FileUploaderItem key={i} index={i}>
-                              <Paperclip className="h-4 w-4 stroke-current" />
-                              <span>{file.name}</span>
-                            </FileUploaderItem>
-                          ))}
-                      </FileUploaderContent>
-                    </FileUploader>
-                  </FormControl>
-                  
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        
-        <FormField
-          control={form.control}
-          name="tags"
-          render={({ field }) => (
-            <FormItem className=" rounded-lg bg-dark-200/10">
-              <FormLabel className="text-lg font-semibold mb-3 text-white">Enter Tags</FormLabel>
-              <FormControl>
-                <TagsInput
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  placeholder="Enter your tags"
-                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary transition-all duration-200"
-                />
-              </FormControl>
-              
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="event_description"
-          render={({ field }) => (
-            <FormItem className=" rounded-lg bg-dark-200/10">
+            <FormItem className="rounded-lg bg-dark-200/10">
               <FormLabel className="text-lg font-semibold mb-3 text-white">Event Description</FormLabel>
               <FormControl>
                 <Textarea
@@ -300,12 +346,118 @@ export default function EventForm() {
                   {...field}
                 />
               </FormControl>
-              
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="btn-primary text-lg text-black w-full py-8 mt-8 font-semibold transition-all duration-200 hover:scale-[1.02] focus:ring-2 focus:ring-primary focus:ring-offset-2">Create Event</Button>
+        
+        <FormField
+          control={form.control}
+          name="overview"
+          render={({ field }) => (
+            <FormItem className="rounded-lg bg-dark-200/10">
+              <FormLabel className="text-lg font-semibold mb-3 text-white">Event Overview</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter event overview"
+                  className="resize-none border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 min-h-[120px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormItem className="rounded-lg bg-dark-200/10">
+          <FormLabel className="text-lg font-semibold mb-3 text-white">Event Image</FormLabel>
+          <FormControl>
+            <FileUploader
+              value={files}
+              onValueChange={setFiles}
+              dropzoneOptions={dropZoneConfig}
+              className="relative border-2 border-gray-800 bg-dark-200 rounded-lg transition-all duration-200 hover:border-primary"
+            >
+              <FileInput
+                id="fileInput"
+                className="outline-dashed outline-1 outline-slate-500"
+              >
+                <div className="flex items-center justify-center flex-col p-8 w-full">
+                  <CloudUpload className='text-gray-500 w-10 h-10' />
+                  <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="font-semibold">Click to upload</span>
+                    &nbsp; or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    PNG, JPG or GIF (Max 4MB)
+                  </p>
+                </div>
+              </FileInput>
+              <FileUploaderContent>
+                {files &&
+                  files.length > 0 &&
+                  files.map((file, i) => (
+                    <FileUploaderItem key={i} index={i} className="relative">
+                      <Paperclip className="h-4 w-4 stroke-current" />
+                      <span>{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setFiles(null)}
+                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </FileUploaderItem>
+                  ))}
+              </FileUploaderContent>
+            </FileUploader>
+          </FormControl>
+        </FormItem>
+        
+        <FormField
+          control={form.control}
+          name="tags"
+          render={({ field }) => (
+            <FormItem className="rounded-lg bg-dark-200/10">
+              <FormLabel className="text-lg font-semibold mb-3 text-white">Event Tags</FormLabel>
+              <FormControl>
+                <TagsInput
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Type and press Tab, Enter, or comma to add tags"
+                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary transition-all duration-200"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="agenda"
+          render={({ field }) => (
+            <FormItem className="rounded-lg bg-dark-200/10">
+              <FormLabel className="text-lg font-semibold mb-3 text-white">Event Agenda</FormLabel>
+              <FormControl>
+                <TagsInput
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Type and press Tab, Enter, or comma to add agenda items"
+                  className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary transition-all duration-200"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="btn-primary text-lg text-black w-full py-8 mt-8 font-semibold transition-all duration-200 hover:scale-[1.02] focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Creating Event..." : "Create Event"}
+        </Button>
       </form>
     </Form>
   )
