@@ -19,7 +19,7 @@ const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
     const inputRef = React.useRef<HTMLInputElement>(null)
 
     const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+      if (e.key === "Enter" || e.key === "," || e.key === " ") {
         e.preventDefault()
         const newTag = inputValue.trim()
         if (newTag && !value.includes(newTag)) {

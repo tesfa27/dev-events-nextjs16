@@ -99,9 +99,18 @@ export default function EventForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      title: "",
+      description: "",
+      overview: "",
+      venue: "",
+      location: "",
+      date: new Date(),
+      time: "",
+      mode: "",
+      audience: "",
+      organizer: "",
       tags: [],
-      agenda: [],
-      date: new Date()
+      agenda: []
     },
   })
 
@@ -394,21 +403,19 @@ export default function EventForm() {
                 </div>
               </FileInput>
               <FileUploaderContent>
-                {files &&
-                  files.length > 0 &&
-                  files.map((file, i) => (
-                    <FileUploaderItem key={i} index={i} className="relative">
+                {files && files.length > 0 && (
+                  <div className="space-y-2">
+                    <img 
+                      src={URL.createObjectURL(files[0])} 
+                      alt="Preview" 
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <FileUploaderItem index={0} onRemove={() => setFiles(null)}>
                       <Paperclip className="h-4 w-4 stroke-current" />
-                      <span>{file.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => setFiles(null)}
-                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      <span>{files[0].name}</span>
                     </FileUploaderItem>
-                  ))}
+                  </div>
+                )}
               </FileUploaderContent>
             </FileUploader>
           </FormControl>
@@ -424,7 +431,7 @@ export default function EventForm() {
                 <TagsInput
                   value={field.value}
                   onValueChange={field.onChange}
-                  placeholder="Type and press Tab, Enter, or comma to add tags"
+                  placeholder="Type and press Space, Enter, or comma to add tags"
                   className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary transition-all duration-200"
                 />
               </FormControl>
@@ -443,7 +450,7 @@ export default function EventForm() {
                 <TagsInput
                   value={field.value}
                   onValueChange={field.onChange}
-                  placeholder="Type and press Tab, Enter, or comma to add agenda items"
+                  placeholder="Type and press Space, Enter, or comma to add agenda items"
                   className="border-2 border-gray-800 bg-dark-200 py-8 px-4 text-base placeholder:text-gray-300 focus:ring-2 focus:ring-primary transition-all duration-200"
                 />
               </FormControl>
