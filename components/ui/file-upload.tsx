@@ -76,10 +76,11 @@ FileUploaderContent.displayName = "FileUploaderContent"
 
 interface FileUploaderItemProps extends React.HTMLAttributes<HTMLDivElement> {
   index: number
+  onRemove?: () => void
 }
 
 const FileUploaderItem = React.forwardRef<HTMLDivElement, FileUploaderItemProps>(
-  ({ className, index, children, ...props }, ref) => {
+  ({ className, index, onRemove, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -99,7 +100,7 @@ const FileUploaderItem = React.forwardRef<HTMLDivElement, FileUploaderItemProps>
           className="h-6 w-6 p-0"
           onClick={(e) => {
             e.stopPropagation()
-            // Handle file removal logic here
+            onRemove?.()
           }}
         >
           <X className="h-4 w-4" />

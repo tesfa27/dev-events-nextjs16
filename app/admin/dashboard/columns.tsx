@@ -1,7 +1,10 @@
 "use client"
 import { ColumnDef } from "@tanstack/react-table"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { DeleteButton } from "./delete-button"
+import { ViewButton } from "./view-button"
 
 export type EventItem = {
   title: string
@@ -43,11 +46,14 @@ export const columns: ColumnDef<EventItem>[] = [
   },
   {
     id: "actions",
-    header: "",
+    header: "Actions",
     cell: ({ row }) => (
-      <div className="flex gap-3">
-        <Button variant="link" className="text-primary ">Edit</Button>
-        <Button variant="link" className="text-secondary">Delete</Button>
+      <div className="flex items-center gap-3 justify-end">
+        <ViewButton slug={row.original.slug} />
+        <Link href={`/admin/edit/${row.original.slug}`} className="text-primary hover:underline">
+          Edit
+        </Link>
+        <DeleteButton slug={row.original.slug} title={row.original.title} />
       </div>
     ),
   },
